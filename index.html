@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departures</title>
+    <link rel="icon" type="image/x-icon" href="static/favicon.ico">
+    <style>
+        :root {
+            --bg: #f5f7fb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --ok: #047857;
+            --late: #b91c1c;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            margin: 0;
+            padding: 16px 20px;
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--line);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            font-size: 0.95rem;
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 600;
+            background: #fafafa;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .on-time {
+            color: var(--ok);
+            font-weight: 600;
+        }
+
+        .delayed {
+            color: var(--late);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1>Departures</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Direction</th>
+                    <th>Time</th>
+                    <th>Real Time</th>
+                    <th>Delay</th>
+                </tr>
+            </thead>
+            <tbody id="departures-body"></tbody>
+        </table>
+    </main>
+
+    <script>
+        function refreshTable() {
+            fetch('/get_departures')
+                .then(response => response.json())
+                .then(departures => {
+                    console.log("Received departures:", departures);
+
+                    const tbody = document.getElementById("departures-body");
+                    tbody.innerHTML = ""; // Clear existing rows
+
+                    departures.forEach((departure) => {
+                        const row = document.createElement("tr");
+                        const isDelayed = departure.delay !== "0 min";
+
+                        row.innerHTML = `
+                        <td>${departure.name}</td>
+                        <td>${departure.direction}</td>
+                        <td>${departure.scheduled_time}</td>
+                        <td>${departure.actual_time}</td>
+                        <td class="${isDelayed ? "delayed" : "on-time"}">${departure.delay}</td>
+                    `;
+
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching departures:', error));
+        }
+        // Initial call to populate the table
+        window.onload = function () {
+            refreshTable();
+        };
+
+        // Refresh the table every 30 seconds
+        setInterval(refreshTable, 30000);
+    </script>
+</body>
+
+</html>
