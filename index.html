@@ -82,17 +82,28 @@
     </style>
 </head>
 
+<!-- TODO design -->
+<!-- TODO fix column widths, make sure there are no unwanted linebreaks -->
+
 <body>
     <main class="container">
-        <h1>Departures</h1>
+        <h1 id="current-time"></h1>
+        <script>
+            function updateTime() {
+                document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+        </script>
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Direction</th>
-                    <th>Time</th>
-                    <th>Real Time</th>
-                    <th>Delay</th>
+                    <th>Linie</th>
+                    <th>Nach</th>
+                    <th>Von</th>
+                    <th>In</th>
+                    <th>Um</th>
+                    <th>Hält bei</th>
                 </tr>
             </thead>
             <tbody id="departures-body"></tbody>
@@ -111,17 +122,24 @@
 
                     departures.forEach((departure) => {
                         const row = document.createElement("tr");
-                        const isDelayed = departure.delay !== "0 min";
+                        const isDelayed = departure.delay > 0;
 
                         row.innerHTML = `
                         <td>${departure.name}</td>
                         <td>${departure.direction}</td>
-                        <td>${departure.scheduled_time}</td>
-                        <td>${departure.actual_time}</td>
-                        <td class="${isDelayed ? "delayed" : "on-time"}">${departure.delay}</td>
-                    `;
+                        <td>${departure.station + " (" + departure.track + ")"}</td>
+                        <td>${departure.time_to_departure > 0 ? departure.time_to_departure : "Jetzt"}</td>                    
+                        <td class="${isDelayed ? "delayed" : "on-time"}">${`${departure.scheduled_time.slice(0, 5)}${isDelayed ? " (+" + departure.delay + ")" : ""}`}</td>
+                        <td>${Object.keys(departure.stops_at).length > 0 ? Object.entries(departure.stops_at).map(([stop, times]) => `${stop} (${times.arrival_time.slice(0, 5)})${times.delay ? " (+" + times.delay + ")" : ""}`).join("<br>") : ""}</td>
+                        </tr>`;
 
                         tbody.appendChild(row);
+
+                        for (const message of departure.messages) {
+                            const messageRow = document.createElement("tr");
+                            messageRow.innerHTML = `<td colspan="7" style="color: var(--muted); font-size: 0.9rem; font-style: italic;">${departure.name}: ${message}</td>`;
+                            tbody.appendChild(messageRow);
+                        }
                     });
                 })
                 .catch(error => console.error('Error fetching departures:', error));
