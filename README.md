@@ -12,8 +12,10 @@ Small Flask app that shows upcoming departures in a browser table.
 
 1. Create a virtual environment (optional but recommended):
 	```powershell
-	python -m venv .venv
-	.\.venv\Scripts\activate
+	python -m venv .venv (create)
+
+	.\.venv\Scripts\activate (activate windows)
+	source .venv\bin\activate (activate linux)
 	```
 2. Install dependencies:
 	```powershell
@@ -30,6 +32,7 @@ Start the app:
 
 ```powershell
 python app.py
+flask run --host=0.0.0.0 (accessible from whole network)
 ```
 
 Open in browser:

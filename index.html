@@ -8,13 +8,13 @@
     <link rel="icon" type="image/x-icon" href="static/favicon.ico">
     <style>
         :root {
-            --bg: #f5f7fb;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --line: #e5e7eb;
-            --ok: #047857;
-            --late: #b91c1c;
+            --bg: #000000;
+            --card: #0f0f0f;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --line: #334155;
+            --ok: #10b981;
+            --late: #ef4444;
         }
 
         * {
@@ -26,11 +26,11 @@
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background: var(--bg);
             color: var(--text);
-            padding: 24px;
+            padding: 14px;
         }
 
         .container {
-            max-width: 960px;
+            max-width: 1260px;
             margin: 0 auto;
             background: var(--card);
             border: 1px solid var(--line);
@@ -63,7 +63,7 @@
         th {
             color: var(--muted);
             font-weight: 600;
-            background: #fafafa;
+            background: #0f172a;
         }
 
         tr:last-child td {
@@ -87,7 +87,7 @@
 
 <body>
     <main class="container">
-        <h1 id="current-time"></h1>
+        <h1 id="current-time" style="text-align: center; font-size: xx-large;"></h1>
         <script>
             function updateTime() {
                 document.getElementById('current-time').textContent = new Date().toLocaleTimeString();
@@ -96,7 +96,7 @@
             setInterval(updateTime, 1000);
         </script>
         <table>
-            <thead>
+            <!-- <thead>
                 <tr>
                     <th>Linie</th>
                     <th>Nach</th>
@@ -105,7 +105,7 @@
                     <th>Um</th>
                     <th>Hält bei</th>
                 </tr>
-            </thead>
+            </thead> -->
             <tbody id="departures-body"></tbody>
         </table>
     </main>
@@ -125,9 +125,9 @@
                         const isDelayed = departure.delay > 0;
 
                         row.innerHTML = `
-                        <td>${departure.name}</td>
-                        <td>${departure.direction}</td>
-                        <td>${departure.station + " (" + departure.track + ")"}</td>
+                        <td style="background: #${departure.color.bg}; color: #${departure.color.fg};">${departure.name}</td>
+                        <td>${departure.direction}<span style="color: #ef4444;">${departure.messages.length > 0 ? " &#128712;" : ""}</span></td>
+                        <td>${departure.station + " (" + departure.track + ") "}</td>
                         <td>${departure.time_to_departure > 0 ? departure.time_to_departure : "Jetzt"}</td>                    
                         <td class="${isDelayed ? "delayed" : "on-time"}">${`${departure.scheduled_time.slice(0, 5)}${isDelayed ? " (+" + departure.delay + ")" : ""}`}</td>
                         <td>${Object.keys(departure.stops_at).length > 0 ? Object.entries(departure.stops_at).map(([stop, times]) => `${stop} (${times.arrival_time.slice(0, 5)})${times.delay ? " (+" + times.delay + ")" : ""}`).join("<br>") : ""}</td>
@@ -135,11 +135,11 @@
 
                         tbody.appendChild(row);
 
-                        for (const message of departure.messages) {
-                            const messageRow = document.createElement("tr");
-                            messageRow.innerHTML = `<td colspan="7" style="color: var(--muted); font-size: 0.9rem; font-style: italic;">${departure.name}: ${message}</td>`;
-                            tbody.appendChild(messageRow);
-                        }
+                        // for (const message of departure.messages) {
+                        //     const messageRow = document.createElement("tr");
+                        //     messageRow.innerHTML = `<td colspan="7" style="color: var(--muted); font-size: 0.9rem; font-style: italic;">${departure.name}: ${message}</td>`;
+                        //     tbody.appendChild(messageRow);
+                        // }
                     });
                 })
                 .catch(error => console.error('Error fetching departures:', error));

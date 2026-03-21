@@ -21,10 +21,37 @@ relevant_stations = [
 
 # stations/stops where we want to know if they are reachable
 relevant_stops = [
-    {"name": "Mainz Hauptbahnhof", "id": "A=1@O=Mainz Hauptbahnhof"},
-    # TODO ?{"name": "Mainz Hbf West/Taubertsberg Bad+Spa", "id": "A=1@O=Mainz Hbf West/Taubertsberg Bad+Spa"}
-    {"name": "Mainz-Oberstadt Universität/Haupteingang", "id": "A=1@O=Mainz-Oberstadt Universität/Haupteingang"}
+    {"name": "Mainz Hauptbahnhof", "id": "A=1@O=Mainz Hauptbahnhof", "skip": "Mainz Hbf West/Taubertsberg Bad+Spa"},
+    {"name": "Mainz Hbf West/Taubertsberg Bad+Spa", "id": "A=1@O=Mainz Hbf West/Taubertsberg Bad+Spa"},
+    {"name": "Mainz-Oberstadt Universität/Haupteingang", "id": "A=1@O=Mainz-Oberstadt Universität/Haupteingang"},
+    {"name": "Mainz-Oberstadt Friedrich-von-Pfeiffer-Weg/Univers", "id": "A=1@O=MZ Friedrich-von-Pfeiffer-Weg"},
 ]
+
+colors = {
+    "6": {"bg": "ef7c00", "fg": "000000"},
+    "28": {"bg": "dbe283", "fg": "000000"},
+    "54": {"bg": "3d8823", "fg": "ffffff"},
+    "55": {"bg": "3d8823", "fg": "ffffff"},
+    "56": {"bg": "94c11a", "fg": "000000"},
+    "57": {"bg": "94c11a", "fg": "000000"},
+    "58": {"bg": "94c11a", "fg": "000000"},
+    "60": {"bg": "00aecb", "fg": "ffffff"},
+    "62": {"bg": "c22b02", "fg": "ffffff"},
+    "63": {"bg": "00aecb", "fg": "ffffff"},
+    "64": {"bg": "f59c00", "fg": "000000"},
+    "65": {"bg": "f59c00", "fg": "000000"},
+    "66": {"bg": "ffd400", "fg": "000000"},
+    "68": {"bg": "007f3b", "fg": "ffffff"},
+    "70": {"bg": "a6156f", "fg": "ffffff"},
+    "71": {"bg": "a6156f", "fg": "ffffff"},
+    "78": {"bg": "0a4871", "fg": "ffffff"},
+    "79": {"bg": "007f3b", "fg": "ffffff"},
+    "80": {"bg": "0060a7", 	"fg":"ffffff"},
+    '81': {'bg': '0060a7', 'fg': 'ffffff'},
+    '90': {'bg': '8d004b', 'fg': 'ffffff'},
+    '91': {'bg': '904b00', 'fg': 'ffffff'},
+    '93': {'bg': '58770b', 'fg': 'ffffff'},
+}
 
 # routes
 @app.route("/")
@@ -47,7 +74,7 @@ def get_departures():
     for relevant_station in relevant_stations:
         params = {    
             "id": relevant_station["id"],
-            "duration": 30,
+            "duration": 60,
             "passlist": 1,
         }
 
@@ -61,8 +88,10 @@ def get_departures():
     departures = []
     for departure_info in departures_data:
         id_ = departure_info.get("Product", [{}])[0].get("num", "N/A")
+        line = departure_info.get("ProductAtStop", "N/A").get("line", "N/A")
         departure = {
-            "name": departure_info.get("name", "N/A"),
+            "name": line,
+            "color": colors.get(line, {"bg": "cccccc", "fg": "000000"}),
             "id": id_,
             "station": departure_info.get("stop", "N/A"),
             "track": departure_info.get("track", "N/A"),
@@ -87,6 +116,13 @@ def get_departures():
                     "rt_arrival_time": stp_rt_arrival_time,
                     "delay": stp_delay
                 }
+        # filter skips
+        for rs in relevant_stops:
+            if rs.get("skip"):
+                print(rs["skip"])
+                if rs["name"] in departure["stops_at"]:
+                    if rs["skip"] in departure["stops_at"]:
+                        del departure["stops_at"][rs["skip"]]
 
         messages = departure_info.get("Messages", {}).get("Message", [])
         for message in messages:
