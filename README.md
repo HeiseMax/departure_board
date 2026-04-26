@@ -39,3 +39,15 @@ Open in browser:
 
 - `http://127.0.0.1:5000/` (UI)
 - `http://127.0.0.1:5000/get_departures` (JSON data)
+
+## Terminal View
+
+Run the same API data in the terminal with a refresh loop:
+
+```powershell
+python terminal_view.py
+```
+
+Optional environment variables:
+
+- `REFRESH_SECONDS=15` to change the update interval
