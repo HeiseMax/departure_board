@@ -163,17 +163,20 @@ def default_departure_renderer(departure, index=None, width=96):
 
 def render_departure_block(departure, index=None, width=96):
     layout = _column_layout(width)
-    badge_text = _pad(departure["name"], 5, align="center")
+    badge_text = _pad(departure["name"], 6, align="center")
     badge_style = departure.get("color", {"bg": "#334155", "fg": "#f8fafc"})
-    badge = _ansi_wrap(badge_text, fg=f"#{badge_style['fg']}", bg=f"#{badge_style['bg']}", bold=True)
+    # add a couple of characters of left padding before the colored badge
+    badge = " " + _ansi_wrap(badge_text, fg=f"#{badge_style['fg']}", bg=f"#{badge_style['bg']}", bold=True)
     direction_width = layout["direction"]
     station_width = layout["station"]
     direction = _fit_text(departure.get("direction", "N/A"), direction_width)
-    station_label = departure.get("station_display_name") or departure.get("station", "N/A")
-    station = _fit_text(station_label, station_width)
     track = departure.get("track", "N/A")
     if track == "N/A":
         track = "-"
+    station_label = departure.get("station_display_name") or departure.get("station", "N/A")
+    station_label = station_label + f" ({track})"
+    station = _fit_text(station_label, station_width)
+    
     in_minutes = departure.get("time_to_departure", "N/A")
     planned = departure.get("scheduled_time", "N/A")
     delay = departure.get("delay", "N/A")
@@ -183,7 +186,7 @@ def render_departure_block(departure, index=None, width=96):
     in_text = "Jetzt" if isinstance(in_minutes, int) and in_minutes <= 0 else (str(in_minutes) if in_minutes != "N/A" else "N/A")
     time_color = _status_color(departure)
     planned_rendered = _ansi_wrap(planned_text, fg=time_color, bold=True)
-    in_rendered = _ansi_wrap(in_text, fg=time_color, bold=True)
+    in_rendered = _ansi_wrap(in_text, fg=None, bold=True)
     delay_rendered = _ansi_wrap(delay_text, fg=time_color, bold=True) if delay_text else ""
 
     def cell(text, cell_width, align="left"):
@@ -193,7 +196,7 @@ def render_departure_block(departure, index=None, width=96):
         f"{cell(badge, layout['line'])}  "
         f"{cell(direction, direction_width)}  "
         f"{cell(station, station_width)}  "
-        f"{cell(track, layout['track'], align='center')}  "
+        # f"{cell(track, layout['track'], align='center')}  "
         f"{cell(in_rendered, layout['in'], align='right')}  "
         f"{cell(planned_rendered + delay_rendered, layout['planned'], align='left')}"
     )
@@ -206,7 +209,7 @@ def render_departure_block(departure, index=None, width=96):
             arrival = stop_data.get("arrival_time", "N/A")
             stop_delay = stop_data.get("delay", "N/A")
             stop_delay_text = f" (+{stop_delay})" if isinstance(stop_delay, (int, float)) and stop_delay > 0 else ""
-            stop_parts.append(f"{stop_name} ({arrival[:5]}){stop_delay_text}")
+            stop_parts.append(f"{stop_name} ({arrival[:5]})")
 
         stop_lines = _wrap_segments(stop_parts, layout["stops"])
 
@@ -228,7 +231,7 @@ def render_departure_block(departure, index=None, width=96):
                 f"{cell('', layout['line'])}  "
                 f"{cell('', direction_width)}  "
                 f"{cell('', station_width)}  "
-                f"{cell('', layout['track'], align='center')}  "
+                # f"{cell('', layout['track'], align='center')}  "
                 f"{cell('', layout['in'], align='right')}  "
                 f"{cell('', layout['planned'], align='left')}  "
                 f"{cell(stop_line, layout['stops'])}"
@@ -269,7 +272,7 @@ def print_departures(departures, render_departure=None, stream=sys.stdout, title
         f"{_pad('L', layout['line'], align='center')}  "
         f"{_pad('Nach', layout['direction'])}  "
         f"{_pad('Von', layout['station'])}  "
-        f"{_pad('G', layout['track'], align='center')}  "
+        # f"{_pad('G', layout['track'], align='center')}  "
         f"{_pad('In', layout['in'], align='right')}  "
         f"{_pad('Um', layout['planned'])}  "
         f"{_pad('Stops', layout['stops'])}"
@@ -302,7 +305,9 @@ def print_departures(departures, render_departure=None, stream=sys.stdout, title
     if leftover:
         lines.extend([" " * board_width] * leftover)
 
-    frame = "\n".join(lines)
+    # ensure we clear any leftover characters at end-of-line from prior frames
+    clear_eol = "\033[K"
+    frame = "\n".join(line + clear_eol for line in lines)
     stream.write("\033[H")
     stream.write(frame)
     stream.flush()

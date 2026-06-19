@@ -15,10 +15,10 @@ relevant_stations = [
 ]
 
 relevant_stops = [
-    {"name": "Mainz Hauptbahnhof", "id": "A=1@O=Mainz Hauptbahnhof", "skip": "Mainz Hbf West/Taubertsberg Bad+Spa"},
-    {"name": "Mainz Hbf West/Taubertsberg Bad+Spa", "id": "A=1@O=Mainz Hbf West/Taubertsberg Bad+Spa"},
-    {"name": "Mainz-Oberstadt Universität/Haupteingang", "id": "A=1@O=Mainz-Oberstadt Universität/Haupteingang"},
-    {"name": "Mainz-Oberstadt Friedrich-von-Pfeiffer-Weg/Univers", "id": "A=1@O=MZ Friedrich-von-Pfeiffer-Weg"},
+    {"name": "Mainz Hauptbahnhof", "id": "A=1@O=Mainz Hauptbahnhof", "skip": "Mainz Hbf West/Taubertsberg Bad+Spa", "display_name": "Mainz Hbf"},
+    {"name": "Mainz Hbf West/Taubertsberg Bad+Spa", "id": "A=1@O=Mainz Hbf West/Taubertsberg Bad+Spa", "display_name": "Mainz Hbf West"},
+    {"name": "Mainz-Oberstadt Universität/Haupteingang", "id": "A=1@O=Mainz-Oberstadt Universität/Haupteingang", "display_name": "Universität"},
+    {"name": "Mainz-Oberstadt Friedrich-von-Pfeiffer-Weg/Univers", "id": "A=1@O=MZ Friedrich-von-Pfeiffer-Weg", "display_name": "Friedr.-v.-Pf.-Weg"},
 ]
 
 colors = {
@@ -135,6 +135,9 @@ def fetch_departures():
         for station in relevant_stations
     }
     relevant_stop_names = {stop["name"] for stop in relevant_stops}
+    relevant_stop_display_names = {
+        stop["name"]: stop.get("display_name", stop["name"]) for stop in relevant_stops
+    }
 
     for relevant_station in relevant_stations:
         params = {
@@ -188,7 +191,9 @@ def fetch_departures():
                 rt_arrival_time = stop.get("rtArrTime", arrival_time)
                 arrival_date = stop.get("arrDate", departure_info.get("date", "N/A"))
                 rt_arrival_date = stop.get("rtArrDate", arrival_date)
-                departure["stops_at"][stop_name] = {
+                # use the configured display_name for the stop as the key
+                display_key = relevant_stop_display_names.get(stop_name, stop_name)
+                departure["stops_at"][display_key] = {
                     "arrival_time": arrival_time,
                     "rt_arrival_time": rt_arrival_time,
                     "delay": _safe_datetime_delta_minutes(
@@ -202,8 +207,12 @@ def fetch_departures():
 
         for relevant_stop in relevant_stops:
             skip_name = relevant_stop.get("skip")
-            if skip_name and relevant_stop["name"] in departure["stops_at"]:
-                departure["stops_at"].pop(skip_name, None)
+            # if this departure includes the referenced stop, remove the skipped stop
+            if skip_name:
+                src_key = relevant_stop_display_names.get(relevant_stop["name"], relevant_stop["name"])
+                skip_key = relevant_stop_display_names.get(skip_name, skip_name)
+                if src_key in departure["stops_at"]:
+                    departure["stops_at"].pop(skip_key, None)
 
         messages = _as_dict(departure_info.get("Messages")).get("Message", [])
         for message in messages:
