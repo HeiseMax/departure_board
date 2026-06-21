@@ -186,7 +186,7 @@ def render_departure_block(departure, index=None, width=96):
     in_text = "Jetzt" if isinstance(in_minutes, int) and in_minutes <= 0 else (str(in_minutes) if in_minutes != "N/A" else "N/A")
     time_color = _status_color(departure)
     planned_rendered = _ansi_wrap(planned_text, fg=time_color, bold=True)
-    in_rendered = _ansi_wrap(in_text, fg=None, bold=True)
+    in_rendered = _ansi_wrap(in_text, fg=time_color, bold=True)
     delay_rendered = _ansi_wrap(delay_text, fg=time_color, bold=True) if delay_text else ""
 
     def cell(text, cell_width, align="left"):
